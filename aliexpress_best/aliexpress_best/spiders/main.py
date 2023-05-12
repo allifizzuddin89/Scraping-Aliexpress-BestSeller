@@ -2,6 +2,8 @@ import scrapy
 from scrapy import Request
 from scrapy.shell import inspect_response
 from pprint import pprint
+import json
+import re
 
 
 class MainSpider(scrapy.Spider):
@@ -58,7 +60,7 @@ class MainSpider(scrapy.Spider):
             url_lists_new.append("https:"+j)
             print('\n',url_lists_new[i])
             i+=1
-        
+        print('\nTotal url list is {}\n'.format(len(url_lists_new)))
         yield Request(url=url_lists_new[0],headers=self.headers, callback=self.parse_sub_page)
         # url_list_new = "https:"+url_lists
         # url_lists_new = 'https:'.join(url_lists)
@@ -79,12 +81,18 @@ class MainSpider(scrapy.Spider):
     # #         response.follow(url=url_list,headers=self.headers, callback=self.parse_sub_page)
     
     def parse_sub_page(self, response):
-        # the data could be parsed in this page if we load java
-        # so 2 options
-        # 1. use scrapy-playwright to load java
-        # 2. there is hidden json, in window.runParams, contains data
-        # options no 2  dont require to load java
-        inspect_response(response, self)
+        # the data could be parsed in the individual item page by 3 options
+        # 1. use scrapy-playwright to load java, then use css selector as usual
+        # 2. there is hidden json, look into window.runParams, contains data
+        # 3. API, hidden or subscribe to Aliexpress API
+        # options no 2  doesn't require to load java
+
+        # inspect_response(response, self)
+        raw_data = response.css('script:contains("window.runParams")').get()
+        data = json.loads(raw_data.re(r'_init_data_\s*=\s*{\s*data:\s*({.+}) }')[0])
+
+        re.sub(r'_init_data_\s*=\s*{\s*data:\s*({.+}) }',raw_data)
+
         # print('\nSUCCESS\n')
         # print('\n',response.css('div.product-title > h1.product-title-text::text')) 
         # item = {'name':response.css('div.product-title > h1.product-title-text::text').get()}
