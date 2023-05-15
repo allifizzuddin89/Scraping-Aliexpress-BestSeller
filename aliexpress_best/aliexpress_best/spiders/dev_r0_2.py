@@ -13,7 +13,7 @@ class DevR02Spider(scrapy.Spider):
 
     url = 'https://www.aliexpress.com/fn/search-pc/index'
     
-
+    # Key in search item in below
     search_text = "repair kit iphone"
     search_text_dash = search_text.replace(' ','-')
     search_text_plus = search_text.replace(' ','+')
