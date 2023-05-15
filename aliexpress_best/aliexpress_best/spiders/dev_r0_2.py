@@ -4,6 +4,7 @@ import requests
 import json
 from  pprint import pprint
 from scrapy.shell import inspect_response
+from scrapy.exceptions import CloseSpider
 
 class DevR02Spider(scrapy.Spider):
     name = "dev_r0_2"
@@ -11,12 +12,13 @@ class DevR02Spider(scrapy.Spider):
     # start_urls = ["http://x/"]
 
     url = 'https://www.aliexpress.com/fn/search-pc/index'
+    
 
     search_text = "repair kit iphone"
     search_text_dash = search_text.replace(' ','-')
     search_text_plus = search_text.replace(' ','+')
-    search_referer_value= f"https://www.aliexpress.com/w/wholesale-{search_text_dash}.html?d=y&page=1&sorttype=total_tranpro_desc&SearchText={search_text_plus}&trafficChannel=main&g=y&sortType=total_tranpro_desc"
-
+    page_no = 1
+    search_referer_value= f"https://www.aliexpress.com/w/wholesale-{search_text_dash}.html?d=y&page={page_no}&sorttype=total_tranpro_desc&SearchText={search_text_plus}&trafficChannel=main&g=y&sortType=total_tranpro_desc"
     
 
     headers = {
@@ -61,15 +63,29 @@ class DevR02Spider(scrapy.Spider):
         "l": "fBxfgCNHNIEcSVpaBO5Courza779iIdb8sPzaNbMiIEGC63ATyvOJRtQ2RINLd-RRJXPihTB4IRv12vT2er08zkfnSI97Xq9PQkMQe8C582bY"
     }
 
-    body_pre = {"pageVersion":"984c9a58b6d16e5d8c31de9b899f058a","target":"root","data":{"d":"y","page":1,"sorttype":"total_tranpro_desc","SearchText":search_text,"trafficChannel":"main","g":"y","sortType":"total_tranpro_desc","origin":"y"},"eventName":"onChange","dependency":[]}
-
+    body_pre = {"pageVersion":"984c9a58b6d16e5d8c31de9b899f058a","target":"root","data":{"d":"y","page":page_no,"sorttype":"total_tranpro_desc","SearchText":search_text,"trafficChannel":"main","g":"y","sortType":"total_tranpro_desc","origin":"y"},"eventName":"onChange","dependency":[]}
     body = f'{body_pre}'
 
+    # body_pre['data']['page'] = 3
+    # body = f'{body_pre}'
+    # pprint('Body : \n{}'.format(body_pre))
+
+    # search_referer_value = search_referer_value.format(page_no=1)
+    # print('Search : {}\n'.format(search_referer_value))
+
+    # pprint('HEADERS : {}'.format(headers['referer']))
+    # print('\nAFTER change headers\n')
+    # # page_no = 2
+    # headers['referer'] = 'test'
+    # pprint('HEADERS : {}'.format(headers['referer']))
+    # print('\nAFTER change headers full\n')
     # pprint('HEADERS : {}'.format(headers))
+   
     # pprint('COOKIES : {}'.format(cookies))
     # pprint('BODY : {}'.format(body))
 
     def start_requests(self):
+
         request = Request(
             url=self.url,
             method='POST',
@@ -77,22 +93,103 @@ class DevR02Spider(scrapy.Spider):
             cookies=self.cookies,
             headers=self.headers,
             body=self.body,
-            callback= self.paginate
+            callback= self.parse
         )
         yield request
 
-    def paginate(self, response):
-        inspect_response(response, self)
-
+    def parse(self, response):
+        # inspect_response(response, self)
+        # Exit if the connection is declined
+        if response.status == 404: 
+            raise CloseSpider('Receive 404 response')
+        
         raw_data= response.body
         data = json.loads(raw_data)
-        total_data_perpage = len(data['data']['result']['mods']['itemList']['content'])
-        print('\n\n Has {} DATA\n\n'.format(len(total_data_perpage)))
-
+        # total_data_perpage = len(data['data']['result']['mods']['itemList']['content'])
+        try:
+            total_data_perpage = data['data']['result']['pageInfo']['pageSize']
+        except KeyError:
+            raise CloseSpider('Data per page is not exist, no more data')
+        # print('\n\n Has {} DATA\n\n'.format(total_data_perpage))
+        
+        # Exit if there is no data available
+        if total_data_perpage == 0:
+            raise CloseSpider('No more data in response')
+        
+        # output csv file is in data folder in this project folder root
         for i in range(total_data_perpage):
-            item ={
-                'Name' : data['data']['result']['mods']['itemList']['content'][0]['title']['displayTitle'],
-                'Price' : data['data']['result']['mods']['itemList']['content'][0]['prices']['salePrice']['minPrice']
-            }
-            yield item
+            try:
+                item ={
+                    'Name' : data['data']['result']['mods']['itemList']['content'][i]['title']['displayTitle'],
+                    'Price' : data['data']['result']['mods']['itemList']['content'][i]['prices']['salePrice']['minPrice']
+                }
+                yield item
+            except KeyError:
+                item={
+                    'Name' : None,
+                    'Price' : None
+                }
+                yield item
+            except IndexError:
+                item={
+                    'Name' : None,
+                    'Price' : None
+                }
+                yield item
+        
+        
+
+        self.page_no += 1
+        search_referer_value= f"https://www.aliexpress.com/w/wholesale-{self.search_text_dash}.html?d=y&page={self.page_no}&sorttype=total_tranpro_desc&SearchText={self.search_text_plus}&trafficChannel=main&g=y&sortType=total_tranpro_desc"
+
+        self.body_pre['data']['page'] = self.page_no
+        self.body = f'{self.body_pre}'
+
+        self.headers['referer'] = search_referer_value
+        
+        print('\n\n Has {} DATA in page {}\n'.format(total_data_perpage,self.page_no-1))
+        print('\nPAGE NO {}'.format(self.page_no))
+        print('\n')
+        pprint('HEADERS : {}'.format(self.headers))
+        print('\n')
+        pprint('BODY : {}'.format(self.body))
+        print('\n')
+
+        yield response.follow(
+            url=self.url,
+            method='POST',
+            dont_filter=True,
+            cookies=self.cookies,
+            headers=self.headers,
+            body=self.body,
+            callback= self.parse
+        )
+
+
+
+
+
+        # start_requests(page_no = 1):
+        # print("\nHas {} pages\n".format(data['data']['result']['pageInfo']['pageSize']))
+        # self.page_no += 1
+        # self.next_page = f'https://www.aliexpress.com/w/wholesale-{self.search_text_dash}.html?d=y&page={self.page_no}&sorttype=total_tranpro_desc&SearchText={self.search_text_plus}&trafficChannel=main&g=y&sortType=total_tranpro_desc'
+
+
+
+
+        # print('\n New link : \n{}'.format(self.next_page))
+        # print('\n\nNEW HEADERS\n\n')
+        # pprint('\nHEADERS : {}'.format(self.headers))
+        # pprint('\nCOOKIES : {}'.format(self.cookies))
+        # pprint('\nBODY : {}'.format(self.body))
+        # yield response.follow(
+        #     url=next_page,
+        #     method='POST',
+        #     dont_filter=True,
+        #     cookies=self.cookies,
+        #     headers=self.headers,
+        #     body=self.body,
+        #     callback= self.parse
+        #     )
+
 
