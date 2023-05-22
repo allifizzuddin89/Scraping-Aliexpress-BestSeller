@@ -121,7 +121,8 @@ class DevR02Spider(scrapy.Spider):
             try:
                 item ={
                     'Name' : data['data']['result']['mods']['itemList']['content'][i]['title']['displayTitle'],
-                    'Price' : data['data']['result']['mods']['itemList']['content'][i]['prices']['salePrice']['minPrice']
+                    'Price' : data['data']['result']['mods']['itemList']['content'][i]['prices']['salePrice']['minPrice'],
+                    'URL Link' : response.css('div.list--gallery--34TropR > a.manhattan--container--1lP57Ag::attr(href)')  # please review
                 }
                 yield item
             except KeyError:

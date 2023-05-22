@@ -1,0 +1,9 @@
+https://www.aliexpress.com/item/4000051184113.html?spm=a2g0o.productlist.main.1.50462608xBYZfe&algo_pvid=ac2c7dba-6809-486b-addb-756714e32e5c&algo_exp_id=ac2c7dba-6809-486b-addb-756714e32e5c-0&pdp_npi=3%40dis%21MYR%214.55%214.32%21%21%21%21%21%40211bea6216841642931214331d07ea%2110000000114649189%21sea%21MY%210&curPageLogUid=VBiYzviRukNG
+
+productId :"4000051184113"
+skuId:"10000000114649189"
+algo_pvid:"ac2c7dba-6809-486b-addb-756714e32e5c"
+algo_exp_id:"ac2c7dba-6809-486b-addb-756714e32e5c-0"
+pdp_npi: "3%40dis%21MYR%214.55%214.32%21%21%21%21%21%40211bea6216841642931214331d07ea%2110000000114649189%21sea%21MY%210"
+curPageLogUid=
+productlist.main
