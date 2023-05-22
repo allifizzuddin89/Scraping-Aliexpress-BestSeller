@@ -67,24 +67,6 @@ class MainSpider(scrapy.Spider):
     body_pre = {"pageVersion":"984c9a58b6d16e5d8c31de9b899f058a","target":"root","data":{"d":"y","page":page_no,"sorttype":"total_tranpro_desc","SearchText":search_text,"trafficChannel":"main","g":"y","sortType":"total_tranpro_desc","origin":"y"},"eventName":"onChange","dependency":[]}
     body = f'{body_pre}'
 
-    # body_pre['data']['page'] = 3
-    # body = f'{body_pre}'
-    # pprint('Body : \n{}'.format(body_pre))
-
-    # search_referer_value = search_referer_value.format(page_no=1)
-    # print('Search : {}\n'.format(search_referer_value))
-
-    # pprint('HEADERS : {}'.format(headers['referer']))
-    # print('\nAFTER change headers\n')
-    # # page_no = 2
-    # headers['referer'] = 'test'
-    # pprint('HEADERS : {}'.format(headers['referer']))
-    # print('\nAFTER change headers full\n')
-    # pprint('HEADERS : {}'.format(headers))
-   
-    # pprint('COOKIES : {}'.format(cookies))
-    # pprint('BODY : {}'.format(body))
-
     def start_requests(self):
 
         request = Request(
@@ -166,30 +148,3 @@ class MainSpider(scrapy.Spider):
             body=self.body,
             callback= self.parse
         )
-
-
-
-
-
-        # start_requests(page_no = 1):
-        # print("\nHas {} pages\n".format(data['data']['result']['pageInfo']['pageSize']))
-        # self.page_no += 1
-        # self.next_page = f'https://www.aliexpress.com/w/wholesale-{self.search_text_dash}.html?d=y&page={self.page_no}&sorttype=total_tranpro_desc&SearchText={self.search_text_plus}&trafficChannel=main&g=y&sortType=total_tranpro_desc'
-
-
-
-
-        # print('\n New link : \n{}'.format(self.next_page))
-        # print('\n\nNEW HEADERS\n\n')
-        # pprint('\nHEADERS : {}'.format(self.headers))
-        # pprint('\nCOOKIES : {}'.format(self.cookies))
-        # pprint('\nBODY : {}'.format(self.body))
-        # yield response.follow(
-        #     url=next_page,
-        #     method='POST',
-        #     dont_filter=True,
-        #     cookies=self.cookies,
-        #     headers=self.headers,
-        #     body=self.body,
-        #     callback= self.parse
-        #     )
